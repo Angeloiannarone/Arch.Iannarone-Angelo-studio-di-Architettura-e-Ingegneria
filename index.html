@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Studio di architettura Angelo Iannarone">
-  <title>Angelo Iannarone — Studio di architettura</title>
+  <meta name="description" content="Iannarone Architettura ed Ingegneria">
+  <title>Iannarone | Architettura ed Ingegneria</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,250 +13,485 @@
   <style>
     :root {
       --bg: #090c11;
-      --panel: #111720;
+      --panel: rgba(17, 23, 32, .86);
       --text: #f4f7f8;
-      --muted: #a0acb6;
+      --muted: #b2bdc5;
       --blue: #80d7f4;
-      --line: rgba(203, 232, 242, .15);
+      --line: rgba(210, 230, 240, .18);
       --display: "Barlow Condensed", "Arial Narrow", sans-serif;
-      --body: "Inter", Arial, sans-serif;
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 80px;
+      background: var(--bg);
+    }
+
     body {
       margin: 0;
       color: var(--text);
-      font-family: var(--body);
-      background-color: var(--bg);
-      background-image:
-        linear-gradient(var(--line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--line) 1px, transparent 1px);
-      background-size: 80px 80px;
+      font-family: "Inter", Arial, sans-serif;
+      background: transparent;
+      isolation: isolate;
     }
-    body.modal-open { overflow: hidden; }
+
     a { color: inherit; }
-    button, input, textarea { font: inherit; }
+    button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
-    button:disabled { cursor: not-allowed; opacity: .5; }
-    img { display: block; width: 100%; }
-    .wrap { width: min(1280px, 90%); margin: 0 auto; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    [hidden] { display: none !important; }
+
+    .wrap { width: min(1280px, 90%); margin: auto; }
     .accent { color: var(--blue); }
     .muted { color: var(--muted); }
+
     .label {
       color: var(--blue);
       font-size: .72rem;
       font-weight: 600;
-      letter-spacing: .16em;
+      letter-spacing: .15em;
       text-transform: uppercase;
     }
-    .section { padding: 110px 0; border-top: 1px solid var(--line); }
-    .section-heading { margin-bottom: 48px; }
-    h1, h2, h3, p { margin-top: 0; }
+
     h1, h2, h3 {
       font-family: var(--display);
       text-transform: uppercase;
-      line-height: .94;
+      line-height: .95;
+      margin-top: 0;
     }
-    h2 { font-size: clamp(3.5rem, 8vw, 7rem); margin: 16px 0 0; }
+
+    h2 {
+      font-size: clamp(3.4rem, 8vw, 7rem);
+      margin: 16px 0 0;
+    }
+
     h3 { font-size: 1.8rem; }
     p { line-height: 1.75; }
 
-    /* Navigazione */
+    /* Sfondo animato */
+    .site-background {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      background: #101820;
+    }
+
+    .background-motion {
+      position: absolute;
+      inset: -60px;
+      will-change: transform;
+    }
+
+    .background-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background-position: center;
+      background-size: cover;
+      animation: slideshow 40s infinite;
+    }
+
+    .background-slide:nth-child(1) {
+      background-image: url("images/citta-1.jpg");
+    }
+
+    .background-slide:nth-child(2) {
+      background-image: url("images/citta-2.jpg");
+      animation-delay: 10s;
+    }
+
+    .background-slide:nth-child(3) {
+      background-image: url("images/citta-3.jpg");
+      animation-delay: 20s;
+    }
+
+    .background-slide:nth-child(4) {
+      background-image: url("images/citta-4.jpg");
+      animation-delay: 30s;
+    }
+
+    @keyframes slideshow {
+      0% {
+        opacity: 0;
+        transform: scale(1.05) translateX(-1%);
+      }
+      5%, 25% { opacity: 1; }
+      30% {
+        opacity: 0;
+        transform: scale(1.12) translateX(1%);
+      }
+      100% { opacity: 0; }
+    }
+
+    .background-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(210, 230, 240, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(210, 230, 240, .06) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(9, 12, 17, .88), rgba(100, 48, 20, .35)),
+        rgba(9, 12, 17, .72);
+      background-size: 80px 80px, 80px 80px, cover, cover;
+    }
+
+    /* Menu */
     .header {
       position: fixed;
       inset: 0 0 auto;
       z-index: 20;
-      background: rgba(9, 12, 17, .88);
       border-bottom: 1px solid var(--line);
+      background: rgba(9, 12, 17, .9);
       backdrop-filter: blur(16px);
     }
+
     .nav {
       min-height: 76px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 24px;
+      gap: 20px;
     }
+
     .brand {
-      font-family: var(--display);
-      font-weight: 800;
-      font-size: 1.3rem;
-      line-height: .9;
-      text-transform: uppercase;
+      font: 800 1.3rem/.9 var(--display);
       text-decoration: none;
+      text-transform: uppercase;
     }
-    .nav-links { display: flex; align-items: center; gap: 25px; }
+
+    .nav-links { display: flex; gap: 24px; }
+
     .nav-links a {
-      color: #d2dbe0;
-      font-size: .73rem;
+      color: #dce4e8;
+      font-size: .72rem;
       text-decoration: none;
       text-transform: uppercase;
       letter-spacing: .08em;
     }
+
     .nav-links a:hover { color: var(--blue); }
+
     .menu-toggle {
       display: none;
-      color: var(--text);
-      background: none;
       border: 1px solid var(--line);
-      padding: 9px 12px;
+      background: transparent;
+      color: white;
+      padding: 10px 14px;
     }
 
-    /* Hero */
-    .hero { padding: 160px 0 100px; min-height: 85vh; display: grid; align-items: center; }
-    .hero-grid { display: grid; grid-template-columns: 1.4fr .6fr; align-items: end; gap: 60px; }
-    h1 {
-      font-size: clamp(4.5rem, 11vw, 10rem);
-      letter-spacing: -.025em;
-      margin: 22px 0;
+    /* Apertura */
+    .hero {
+      min-height: 100vh;
+      padding: 150px 0 50px;
+      display: flex;
+      align-items: end;
+      background:
+        linear-gradient(90deg, rgba(9, 12, 17, .88), rgba(9, 12, 17, .5)),
+        url("images/borgo.jpg") center / cover;
     }
-    .hero-copy { max-width: 550px; color: var(--muted); }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+
+    .hero h1 {
+      font-size: clamp(4.5rem, 10vw, 9.5rem);
+      margin: 22px 0;
+      letter-spacing: -.025em;
+    }
+
+    .hero h1 .accent {
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--blue);
+    }
+
+    .hero-intro { max-width: 650px; color: #d7e0e4; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 40px; }
+
     .button {
       display: inline-flex;
-      align-items: center;
       justify-content: center;
-      padding: 15px 22px;
+      align-items: center;
       min-height: 48px;
+      padding: 14px 22px;
       border: 1px solid var(--blue);
       background: var(--blue);
       color: #081017;
-      text-decoration: none;
-      text-transform: uppercase;
       font-size: .72rem;
       font-weight: 600;
       letter-spacing: .08em;
+      text-decoration: none;
+      text-transform: uppercase;
     }
-    .button:hover { filter: brightness(1.12); }
-    .button-outline { background: transparent; color: var(--text); border-color: var(--line); }
-    .glass {
-      padding: 28px;
-      border: 1px solid rgba(165, 223, 244, .24);
-      background: linear-gradient(135deg, rgba(146, 212, 235, .12), rgba(255, 255, 255, .025));
-      backdrop-filter: blur(18px);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+
+    .button-outline {
+      color: white;
+      background: transparent;
+      border-color: var(--line);
     }
-    .glass h3 { margin: 12px 0 28px; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .stats strong { display: block; font-family: var(--display); color: var(--blue); font-size: 2.8rem; }
-    .stats small { color: var(--muted); }
 
-    /* Marquee */
-    .marquee { overflow: hidden; border-block: 1px solid var(--line); padding: 22px 0; }
-    .marquee-track { display: flex; width: max-content; animation: scroll 32s linear infinite; }
-    .marquee-group { display: flex; gap: 36px; padding-right: 36px; align-items: center; }
-    .marquee span { font: 700 clamp(2rem, 4vw, 3.5rem)/1 var(--display); white-space: nowrap; }
-    .outline { color: transparent; -webkit-text-stroke: 1px var(--blue); }
-    @keyframes scroll { to { transform: translateX(-50%); } }
+    .hero-cards, .hero-bar, .projects {
+      display: grid;
+      gap: 14px;
+    }
 
+    .hero-cards, .projects { grid-template-columns: repeat(3, 1fr); }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      padding: 24px;
+    }
+
+    .hero-cards .panel { background: rgba(20, 28, 36, .55); }
+    .hero-cards p { margin: 10px 0 0; }
+
+    .hero-bar {
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      margin-top: 24px;
+      padding-top: 20px;
+    }
+
+    .hero-bar strong {
+      display: block;
+      font: 700 2rem var(--display);
+      color: var(--blue);
+    }
+
+    /* Fascia */
+    .marquee {
+      overflow: hidden;
+      border-block: 1px solid var(--line);
+      padding: 22px 0;
+    }
+
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: scroll 32s linear infinite;
+    }
+
+    .marquee-group {
+      display: flex;
+      gap: 36px;
+      padding-right: 36px;
+      align-items: center;
+    }
+
+    .marquee span {
+      font: 700 clamp(2rem, 4vw, 3.5rem)/1 var(--display);
+      white-space: nowrap;
+    }
+
+    .outline {
+      color: transparent;
+      -webkit-text-stroke: 1px var(--blue);
+    }
+
+    @keyframes scroll {
+      to { transform: translateX(-50%); }
+    }
+
+    /* Sezioni */
+    .section { padding: 110px 0; border-top: 1px solid var(--line); }
+    .section-heading { margin-bottom: 48px; }
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8%; }
-    .intro-text { font-size: clamp(1.1rem, 2vw, 1.5rem); color: #c5d0d6; }
+    .intro { font-size: clamp(1.1rem, 2vw, 1.5rem); }
 
-    /* Competenze */
-    .skills-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: 24px; }
-    .image-placeholder {
-      min-height: 400px;
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    .owner { margin-top: 14px; }
+
+    .skills-layout {
+      display: grid;
+      grid-template-columns: .85fr 1.15fr;
+      gap: 14px;
+    }
+
+    .construction {
+      min-height: 470px;
       display: flex;
       align-items: end;
       padding: 24px;
+      border: 1px solid var(--line);
       background:
-        linear-gradient(145deg, transparent, rgba(9, 12, 17, .8)),
-        linear-gradient(45deg, #394d53, #17212a 55%, #4c6267);
-      border: 1px solid var(--line);
-      color: #c3d0d5;
-      font-size: .8rem;
+        linear-gradient(0deg, rgba(9, 12, 17, .9), transparent),
+        url("images/cantiere.jpg") center / cover,
+        #28363d;
     }
-    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; }
-    .skill, .service {
-      padding: 26px;
-      border: 1px solid var(--line);
-      background: rgba(17, 23, 32, .8);
-    }
-    .skill h3 { margin: 32px 0 14px; }
-    .skill p, .service p { color: var(--muted); font-size: .9rem; margin-bottom: 0; }
-    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .service h3 { margin: 28px 0 15px; }
 
-    /* Progetti */
-    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
+    .badge {
+      padding: 12px;
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      background: rgba(9, 12, 17, .8);
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .skill h3, .service h3 { margin: 28px 0 14px; }
+    .skill p, .service p { color: var(--muted); font-size: .9rem; margin-bottom: 0; }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    /* Lavori */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 30px;
+    }
+
     .filter {
-      background: transparent;
+      padding: 10px 15px;
+      background: rgba(9, 12, 17, .7);
       color: var(--muted);
       border: 1px solid var(--line);
-      padding: 10px 16px;
       font-size: .75rem;
       text-transform: uppercase;
     }
-    .filter[aria-pressed="true"] { background: var(--blue); color: var(--bg); border-color: var(--blue); }
-    .projects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-    .project { border: 1px solid var(--line); background: var(--panel); }
-    .project[hidden] { display: none; }
-    .project-image {
-      height: 210px;
-      background: linear-gradient(135deg, #42535a, #1b242c 60%, #718087);
+
+    .filter[aria-pressed="true"] {
+      color: var(--bg);
+      background: var(--blue);
+      border-color: var(--blue);
     }
-    .project:nth-child(2) .project-image { background: linear-gradient(35deg, #253440, #61777c, #182129); }
-    .project:nth-child(3) .project-image { background: linear-gradient(145deg, #59666a, #202a2e 60%, #101820); }
+
+    .project { padding: 0; overflow: hidden; }
+
+    .project-image {
+      height: 190px;
+      background: linear-gradient(135deg, #44555a, #1a252d 65%, #617378);
+    }
+
     .project-content { padding: 24px; }
     .project h3 { margin: 14px 0; }
-    .project p { font-size: .88rem; color: var(--muted); }
+    .project p { color: var(--muted); font-size: .88rem; }
+
     .text-button {
-      border: 0;
       padding: 0;
+      border: 0;
       background: transparent;
       color: var(--blue);
-      text-transform: uppercase;
       font-size: .75rem;
       letter-spacing: .08em;
+      text-transform: uppercase;
     }
 
     /* Contatti */
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-    .contact-box { padding: 24px; border: 1px solid var(--line); background: var(--panel); }
-    .contact-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
-    .map { width: 100%; height: 300px; border: 0; margin-top: 22px; filter: grayscale(1); }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .contact-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    .contact-list {
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      line-height: 2;
+      overflow-wrap: anywhere;
+    }
+
+    .map {
+      width: 100%;
+      height: 300px;
+      margin-top: 18px;
+      border: 0;
+      filter: grayscale(1);
+    }
+
     .map-note { font-size: .75rem; color: var(--muted); }
-    label { display: block; margin: 0 0 7px; font-size: .78rem; color: #c7d1d6; }
-    input, textarea {
+    label { display: block; margin-bottom: 7px; font-size: .8rem; }
+
+    input, select, textarea {
       width: 100%;
       margin-bottom: 18px;
       padding: 14px;
-      color: var(--text);
-      background: #0c1118;
       border: 1px solid var(--line);
       border-radius: 0;
+      background: #0c1118;
+      color: white;
     }
+
     textarea { min-height: 140px; resize: vertical; }
-    input:focus, textarea:focus, button:focus-visible, a:focus-visible {
+    .status { min-height: 1.5em; color: var(--blue); font-size: .8rem; }
+
+    :focus-visible {
       outline: 2px solid var(--blue);
       outline-offset: 3px;
     }
-    .status { min-height: 1.5em; font-size: .8rem; color: var(--blue); margin-top: 12px; }
 
     /* Footer e modale */
-    footer { border-top: 1px solid var(--line); padding: 40px 0 30px; overflow: hidden; }
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 45px 0 30px;
+      overflow: hidden;
+    }
+
     .footer-title {
       font: 800 clamp(3.5rem, 13vw, 12rem)/.85 var(--display);
       color: transparent;
-      -webkit-text-stroke: 1px rgba(128, 215, 244, .5);
-      white-space: nowrap;
-      margin: 30px 0;
+      -webkit-text-stroke: 1px rgba(128, 215, 244, .6);
+      margin: 35px 0;
     }
-    .footer-bottom { display: flex; justify-content: space-between; gap: 20px; color: var(--muted); font-size: .75rem; }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
     dialog {
-      width: min(600px, 90%);
-      color: var(--text);
-      background: #111820;
+      width: min(720px, 92%);
+      max-height: 85vh;
+      padding: 30px;
       border: 1px solid var(--line);
-      padding: 32px;
+      background: #111820;
+      color: white;
     }
-    dialog::backdrop { background: rgba(0, 0, 0, .8); }
+
+    dialog::backdrop { background: rgba(0, 0, 0, .82); }
     .dialog-top { display: flex; justify-content: space-between; gap: 20px; }
-    .close { background: transparent; color: white; border: 1px solid var(--line); padding: 8px 12px; align-self: start; }
+
+    .close {
+      align-self: start;
+      padding: 8px 12px;
+      color: white;
+      border: 1px solid var(--line);
+      background: transparent;
+    }
+
+    .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .gallery img { width: 100%; height: 180px; object-fit: cover; }
+    .pdf-list a { color: var(--blue); }
 
     @media (max-width: 850px) {
       .menu-toggle { display: block; }
+
       .nav-links {
         display: none;
         position: absolute;
@@ -264,40 +499,61 @@
         left: 0;
         right: 0;
         padding: 25px 5%;
-        background: #10151c;
         flex-direction: column;
-        align-items: flex-start;
+        background: #10151c;
       }
+
       .nav-links.open { display: flex; }
-      .hero-grid, .split, .skills-layout, .contact-grid { grid-template-columns: 1fr; }
-      .hero { padding-top: 140px; }
-      .services-grid, .projects { grid-template-columns: 1fr 1fr; }
+      .split, .skills-layout, .contact-grid { grid-template-columns: 1fr; }
+      .projects, .service-grid { grid-template-columns: 1fr 1fr; }
     }
+
     @media (max-width: 550px) {
       .section { padding: 75px 0; }
-      .skills-grid, .services-grid, .projects { grid-template-columns: 1fr; }
-      .image-placeholder { min-height: 280px; }
+      .hero-cards, .projects, .service-grid, .skills-grid { grid-template-columns: 1fr; }
+      .hero-bar { gap: 10px; }
+      .hero-bar strong { font-size: 1.5rem; }
+      .construction { min-height: 300px; }
       .footer-bottom { flex-direction: column; }
     }
+
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .marquee-track { animation: none; }
+      .background-motion { transform: none !important; }
+      .background-slide { animation: none; opacity: 0; }
+      .background-slide:first-child { opacity: 1; transform: none; }
     }
   </style>
 </head>
 
 <body>
+  <div class="site-background" aria-hidden="true">
+    <div class="background-motion">
+      <div class="background-slide"></div>
+      <div class="background-slide"></div>
+      <div class="background-slide"></div>
+      <div class="background-slide"></div>
+    </div>
+    <div class="background-overlay"></div>
+  </div>
+
   <header class="header">
     <div class="wrap nav">
-      <a href="#inizio" class="brand">Angelo Iannarone<br><span class="accent">Architettura</span></a>
+      <a href="#inizio" class="brand">
+        Iannarone<br><span class="accent">Architettura + Ingegneria</span>
+      </a>
 
-      <button class="menu-toggle" id="menuToggle"
-        aria-expanded="false" aria-controls="navigation">
+      <button
+        id="menuToggle"
+        class="menu-toggle"
+        aria-expanded="false"
+        aria-controls="navigation">
         Menu
       </button>
 
-      <nav class="nav-links" id="navigation" aria-label="Navigazione principale">
-        <a href="#studio">Studio</a>
+      <nav id="navigation" class="nav-links" aria-label="Navigazione principale">
+        <a href="#studio">Lo studio</a>
         <a href="#competenze">Competenze</a>
         <a href="#servizi">Servizi</a>
         <a href="#lavori">Lavori</a>
@@ -308,40 +564,60 @@
 
   <main>
     <section class="hero" id="inizio">
-      <div class="wrap hero-grid">
-        <div>
-          <div class="label">Studio di architettura / Coordinate da inserire</div>
-          <h1>Progettiamo<br><span class="accent">il futuro.</span></h1>
-          <p class="hero-copy">
-            Idee, competenze e visione per dare forma a spazi funzionali,
-            contemporanei e attenti al contesto.
-          </p>
-          <div class="actions">
-            <a href="#lavori" class="button">Esplora i lavori ↗</a>
-            <a href="#contatti" class="button button-outline">Contatta lo studio ↗</a>
+      <div class="wrap">
+        <div class="label">Architettura / Ingegneria — Coordinate da inserire</div>
+
+        <h1>
+          Iannarone<br>
+          <span class="accent">Architettura<br>ed Ingegneria.</span>
+        </h1>
+
+        <p class="hero-intro">
+          Forma e struttura, visione e tecnica: uno spazio di dialogo
+          tra progetto, persone e territorio.
+        </p>
+
+        <div class="actions">
+          <a class="button" href="#lavori">Scopri i lavori ↗</a>
+          <a class="button button-outline" href="#contatti">Contatta lo studio ↗</a>
+        </div>
+
+        <div class="hero-cards">
+          <div class="panel">
+            <span class="label">Profilo professionale</span>
+            <p>OAPPC Avellino</p>
+          </div>
+          <div class="panel">
+            <span class="label">Titolare</span>
+            <p>Angelo Iannarone</p>
+          </div>
+          <div class="panel">
+            <span class="label">Sede</span>
+            <p id="heroAddress">Indirizzo da inserire</p>
           </div>
         </div>
 
-        <aside class="glass" aria-label="Profilo professionale">
-          <div class="label">Profilo professionale</div>
-          <h3>Architettura<br>e progettazione</h3>
-          <div class="stats">
-            <div><strong>360°</strong><small>Visione progettuale</small></div>
-            <div><strong>BIM/CAD</strong><small>Strumenti di progetto</small></div>
-          </div>
-        </aside>
+        <div class="hero-bar">
+          <div><strong>360°</strong><span class="muted">Visione integrata</span></div>
+          <div><strong>BIM/CAD</strong><span class="muted">Strumenti di progetto</span></div>
+          <div><strong>↓</strong><span class="muted">Scorri per scoprire</span></div>
+        </div>
       </div>
     </section>
 
     <div class="marquee" aria-label="Sicurezza e catasto, progettazione architettonica">
       <div class="marquee-track">
         <div class="marquee-group">
-          <span>SICUREZZA + CATASTO</span><span class="outline">✳</span>
-          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span><span>✳</span>
+          <span>SICUREZZA + CATASTO</span>
+          <span class="outline">✳</span>
+          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span>
+          <span>✳</span>
         </div>
         <div class="marquee-group" aria-hidden="true">
-          <span>SICUREZZA + CATASTO</span><span class="outline">✳</span>
-          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span><span>✳</span>
+          <span>SICUREZZA + CATASTO</span>
+          <span class="outline">✳</span>
+          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span>
+          <span>✳</span>
         </div>
       </div>
     </div>
@@ -350,18 +626,37 @@
       <div class="wrap split">
         <div class="section-heading">
           <div class="label">01 — Lo studio</div>
-          <h2>Le idee<br><span class="accent">prendono forma.</span></h2>
+          <h2>Forma e struttura.<br><span class="accent">Un'unica visione.</span></h2>
         </div>
-        <div class="intro-text">
-          <p>
-            Lo studio Angelo Iannarone interpreta l’architettura come
-            dialogo tra persone, spazi e territorio.
+
+        <div>
+          <p class="intro">
+            La sintesi tra forma e struttura guida un approccio in cui
+            architettura e tecnica dialogano con le esigenze delle persone
+            e le caratteristiche del luogo.
           </p>
+
           <p class="muted">
-            Dall’ascolto delle esigenze alla definizione dei dettagli,
-            ogni progetto è un’occasione per costruire soluzioni
-            funzionali e durature.
+            Ogni intervento nasce dall’ascolto e si sviluppa attraverso
+            attenzione al contesto, funzionalità e cura del dettaglio.
           </p>
+
+          <div class="summary-grid">
+            <div class="panel">
+              <span class="label">Approccio</span>
+              <p>Progettazione integrata</p>
+            </div>
+            <div class="panel">
+              <span class="label">Obiettivo</span>
+              <p>Qualità dello spazio</p>
+            </div>
+          </div>
+
+          <div class="panel owner">
+            <span class="label">Il titolare</span>
+            <h3>Angelo Iannarone</h3>
+            <p class="muted">Profilo professionale e informazioni da completare.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -374,29 +669,33 @@
         </div>
 
         <div class="skills-layout">
-          <!-- Sostituisci questo blocco con una foto di cantiere autorizzata. -->
-          <div class="image-placeholder">Spazio riservato alla foto del cantiere</div>
+          <div class="construction">
+            <span class="badge">NTC 2018 • ReLUIS</span>
+          </div>
 
           <div class="skills-grid">
-            <article class="skill">
+            <article class="panel skill">
               <span class="label">A1</span>
               <h3>Architettura</h3>
-              <p>Ideazione e sviluppo di spazi in relazione al contesto.</p>
+              <p>Spazi progettati in relazione a persone e contesto.</p>
             </article>
-            <article class="skill">
+
+            <article class="panel skill">
               <span class="label">S2</span>
-              <h3>Sicurezza</h3>
-              <p>Attenzione alla sicurezza nelle diverse fasi del progetto.</p>
+              <h3>Strutture</h3>
+              <p>Analisi e attenzione al comportamento strutturale.</p>
             </article>
-            <article class="skill">
+
+            <article class="panel skill">
               <span class="label">E3</span>
               <h3>Edilizia</h3>
-              <p>Soluzioni per interventi su edifici nuovi ed esistenti.</p>
+              <p>Interventi su edifici nuovi ed esistenti.</p>
             </article>
-            <article class="skill">
+
+            <article class="panel skill">
               <span class="label">C4</span>
               <h3>Catasto</h3>
-              <p>Supporto per documentazione e pratiche catastali.</p>
+              <p>Documentazione e pratiche tecniche.</p>
             </article>
           </div>
         </div>
@@ -407,23 +706,45 @@
       <div class="wrap">
         <div class="section-heading">
           <div class="label">03 — I servizi</div>
-          <h2>Dal concept <span class="accent">al dettaglio.</span></h2>
+          <h2>Dal progetto <span class="accent">al dettaglio.</span></h2>
+          <p class="muted">Prestazioni proposte: verifica e personalizza l’elenco.</p>
         </div>
-        <div class="services-grid">
-          <article class="service">
-            <span class="label">01 / Progetto</span>
+
+        <div class="service-grid">
+          <article class="panel service">
+            <span class="label">01</span>
             <h3>Progettazione architettonica</h3>
-            <p>Studio degli spazi e sviluppo delle soluzioni progettuali.</p>
+            <p>Ideazione e sviluppo degli spazi.</p>
           </article>
-          <article class="service">
-            <span class="label">02 / Trasformazione</span>
+
+          <article class="panel service">
+            <span class="label">02</span>
+            <h3>Progettazione strutturale</h3>
+            <p>Studio e definizione delle soluzioni strutturali.</p>
+          </article>
+
+          <article class="panel service">
+            <span class="label">03</span>
             <h3>Ristrutturazione</h3>
-            <p>Nuove prospettive per ambienti ed edifici esistenti.</p>
+            <p>Trasformazione e recupero degli edifici.</p>
           </article>
-          <article class="service">
-            <span class="label">03 / Consulenza</span>
-            <h3>Pratiche e supporto</h3>
-            <p>Assistenza tecnica in relazione alle esigenze dell’intervento.</p>
+
+          <article class="panel service">
+            <span class="label">04</span>
+            <h3>Restauro</h3>
+            <p>Interventi attenti all’identità del costruito.</p>
+          </article>
+
+          <article class="panel service">
+            <span class="label">05</span>
+            <h3>Sicurezza</h3>
+            <p>Supporto tecnico nelle fasi dell’intervento.</p>
+          </article>
+
+          <article class="panel service">
+            <span class="label">06</span>
+            <h3>Pratiche catastali</h3>
+            <p>Documentazione e adempimenti tecnici.</p>
           </article>
         </div>
       </div>
@@ -434,59 +755,19 @@
         <div class="section-heading">
           <div class="label">04 — Lavori svolti</div>
           <h2>Progetti <span class="accent">selezionati.</span></h2>
-          <p class="muted">Schede dimostrative: sostituiscile con i lavori reali dello studio.</p>
+          <p class="muted">
+            Descrizioni e immagini sono segnaposto, in attesa dei materiali reali.
+          </p>
         </div>
 
         <div class="filters" aria-label="Filtra i progetti">
           <button class="filter" data-filter="tutti" aria-pressed="true">Tutti</button>
-          <button class="filter" data-filter="architettura" aria-pressed="false">Architettura</button>
-          <button class="filter" data-filter="ristrutturazione" aria-pressed="false">Ristrutturazione</button>
-          <button class="filter" data-filter="interni" aria-pressed="false">Interni</button>
+          <button class="filter" data-filter="residenziale" aria-pressed="false">Residenziale</button>
+          <button class="filter" data-filter="strutturale" aria-pressed="false">Strutturale</button>
+          <button class="filter" data-filter="restauro" aria-pressed="false">Restauro e pubblico</button>
         </div>
 
-        <div class="projects">
-          <article class="project" data-category="architettura">
-            <div class="project-image" aria-hidden="true"></div>
-            <div class="project-content">
-              <span class="label">Architettura / Esempio</span>
-              <h3>Progetto architettonico</h3>
-              <p>Inserisci qui una breve descrizione del progetto.</p>
-              <button class="text-button project-open"
-                data-title="Progetto architettonico"
-                data-description="Sostituisci questo testo con i dettagli di un progetto reale.">
-                Dettagli progetto ↗
-              </button>
-            </div>
-          </article>
-
-          <article class="project" data-category="ristrutturazione">
-            <div class="project-image" aria-hidden="true"></div>
-            <div class="project-content">
-              <span class="label">Ristrutturazione / Esempio</span>
-              <h3>Recupero di uno spazio</h3>
-              <p>Inserisci qui una breve descrizione del progetto.</p>
-              <button class="text-button project-open"
-                data-title="Recupero di uno spazio"
-                data-description="Sostituisci questo testo con i dettagli di un progetto reale.">
-                Dettagli progetto ↗
-              </button>
-            </div>
-          </article>
-
-          <article class="project" data-category="interni">
-            <div class="project-image" aria-hidden="true"></div>
-            <div class="project-content">
-              <span class="label">Interni / Esempio</span>
-              <h3>Progetto di interni</h3>
-              <p>Inserisci qui una breve descrizione del progetto.</p>
-              <button class="text-button project-open"
-                data-title="Progetto di interni"
-                data-description="Sostituisci questo testo con i dettagli di un progetto reale.">
-                Dettagli progetto ↗
-              </button>
-            </div>
-          </article>
-        </div>
+        <div class="projects" id="projects"></div>
       </div>
     </section>
 
@@ -499,47 +780,69 @@
 
         <div class="contact-grid">
           <div>
-            <div class="contact-box">
-              <div class="label">Posta elettronica certificata</div>
+            <div class="panel">
+              <span class="label">Studio</span>
+
+              <ul class="contact-list">
+                <li>Indirizzo: <span id="address">da inserire</span></li>
+                <li>Telefono: <a href="tel:+393382937697">338 2937697</a></li>
+                <li>Email 1: <span id="email1">da inserire</span></li>
+                <li>Email 2: <span id="email2">da inserire</span></li>
+                <li>Email 3: <span id="email3">da inserire</span></li>
+              </ul>
+
+              <div class="label">PEC</div>
+
               <div class="contact-row">
-                <p id="pecText">PEC da inserire</p>
+                <p id="pecText">Da inserire</p>
                 <button class="text-button" id="copyPec" disabled>Copia</button>
               </div>
+
               <div class="status" id="copyStatus" role="status"></div>
             </div>
 
-            <!-- Vista indicativa dell'Italia: sostituire con la mappa della sede. -->
             <iframe
               class="map"
               title="Mappa OpenStreetMap: vista indicativa dell'Italia"
               loading="lazy"
               src="https://www.openstreetmap.org/export/embed.html?bbox=6.5%2C36.5%2C19.0%2C47.5&amp;layer=mapnik">
             </iframe>
+
             <p class="map-note">
-              Vista indicativa: inserisci la posizione reale dello studio.
+              Vista indicativa: sostituire con la posizione della sede.
               © <a href="https://www.openstreetmap.org/copyright">Collaboratori OpenStreetMap</a>
             </p>
           </div>
 
-          <form class="contact-box" id="contactForm">
-            <div class="label">Scrivici</div>
+          <form class="panel" id="contactForm">
+            <span class="label">Scrivici</span>
             <h3>Raccontaci la tua idea</h3>
 
             <label for="name">Nome</label>
-            <input id="name" name="name" autocomplete="name" required>
+            <input id="name" autocomplete="name" maxlength="120" required>
 
             <label for="email">La tua email</label>
-            <input id="email" name="email" type="email" autocomplete="email" required>
+            <input id="email" type="email" autocomplete="email" maxlength="254" required>
+
+            <label for="area">Ambito di intervento</label>
+            <select id="area" required>
+              <option value="">Seleziona un ambito</option>
+              <option>Architettura</option>
+              <option>Strutture</option>
+              <option>Ristrutturazione</option>
+              <option>Restauro</option>
+              <option>Pratiche e consulenza</option>
+              <option>Altro</option>
+            </select>
 
             <label for="message">Messaggio</label>
-            <textarea id="message" name="message" required></textarea>
+            <textarea id="message" maxlength="5000" required></textarea>
 
-            <button class="button" id="submitContact" type="submit" disabled>
-              Prepara email ↗
+            <button class="button" id="submitContact" type="submit">
+              Invia richiesta ↗
             </button>
-            <p class="status" id="formStatus" role="status">
-              Inserisci l’email dello studio nella configurazione.
-            </p>
+
+            <p class="status" id="formStatus" role="status"></p>
           </form>
         </div>
       </div>
@@ -548,11 +851,15 @@
 
   <footer>
     <div class="wrap">
-      <div class="label">Studio di architettura</div>
+      <div class="label">Architettura ed Ingegneria</div>
       <div class="footer-title" aria-hidden="true">IANNARONE</div>
+
       <div class="footer-bottom">
         <span>© <span id="year"></span> Angelo Iannarone</span>
-        <span>Architettura / Progettazione</span>
+        <span>
+          <a href="tel:+393382937697">338 2937697</a> ·
+          <span id="footerAddress">Indirizzo da inserire</span>
+        </span>
       </div>
     </div>
   </footer>
@@ -560,19 +867,88 @@
   <dialog id="projectDialog" aria-labelledby="dialogTitle">
     <div class="dialog-top">
       <div>
-        <div class="label">Dettagli progetto</div>
+        <span class="label">Dettagli progetto</span>
         <h2 id="dialogTitle"></h2>
       </div>
+
       <button class="close" id="closeDialog" aria-label="Chiudi dettagli">✕</button>
     </div>
+
     <p class="muted" id="dialogDescription"></p>
+    <div class="gallery" id="dialogGallery"></div>
+    <div class="pdf-list" id="dialogPdfs"></div>
   </dialog>
 
   <script>
-    // CONFIGURAZIONE: inserisci qui i recapiti reali dello studio.
+    /*
+      RECAPITI PUBBLICI
+      Inserisci qui solo i recapiti che vuoi mostrare sul sito.
+      La chiave Resend NON va inserita in questo file.
+    */
+    const ADDRESS = "";
     const PEC = "";
-    const EMAIL_STUDIO = "";
+    const EMAILS = ["", "", ""];
 
+    /*
+      PROGETTI
+      Inserisci i percorsi delle foto e dei PDF quando disponibili.
+
+      Esempio:
+      photos: ["images/covotti-1.jpg", "images/covotti-2.jpg"],
+      pdfs: [{ label: "Elaborato progettuale", url: "pdf/covotti.pdf" }]
+    */
+    const projects = [
+      {
+        title: "Ristrutturazione di Via Covotti",
+        category: "residenziale",
+        categoryLabel: "Residenziale",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      },
+      {
+        title: "Campanile di S. Pietro",
+        category: "restauro",
+        categoryLabel: "Restauro e pubblico",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      },
+      {
+        title: "Miglioramento sismico",
+        category: "strutturale",
+        categoryLabel: "Strutturale",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      },
+      {
+        title: "Restauro facciata",
+        category: "restauro",
+        categoryLabel: "Restauro e pubblico",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      },
+      {
+        title: "Edificio NZEB",
+        category: "residenziale",
+        categoryLabel: "Residenziale",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      },
+      {
+        title: "Riqualificazione",
+        category: "restauro",
+        categoryLabel: "Restauro e pubblico",
+        description: "Descrizione del progetto da inserire.",
+        photos: [],
+        pdfs: []
+      }
+    ];
+
+    // Menu mobile
     const menuToggle = document.getElementById("menuToggle");
     const navigation = document.getElementById("navigation");
 
@@ -588,77 +964,56 @@
       }
     });
 
-    const filterButtons = document.querySelectorAll(".filter");
-    const projects = document.querySelectorAll(".project");
-
-    filterButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        filterButtons.forEach((item) => item.setAttribute("aria-pressed", "false"));
-        button.setAttribute("aria-pressed", "true");
-
-        projects.forEach((project) => {
-          project.hidden =
-            button.dataset.filter !== "tutti" &&
-            project.dataset.category !== button.dataset.filter;
-        });
-      });
-    });
-
+    // Schede progetto e modale
+    const projectContainer = document.getElementById("projects");
     const dialog = document.getElementById("projectDialog");
+    const gallery = document.getElementById("dialogGallery");
+    const pdfList = document.getElementById("dialogPdfs");
 
-    document.querySelectorAll(".project-open").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.getElementById("dialogTitle").textContent = button.dataset.title;
-        document.getElementById("dialogDescription").textContent = button.dataset.description;
-        dialog.showModal();
-        document.body.classList.add("modal-open");
-      });
-    });
+    projects.forEach((project) => {
+      const article = document.createElement("article");
+      article.className = "panel project";
+      article.dataset.category = project.category;
 
-    document.getElementById("closeDialog").addEventListener("click", () => dialog.close());
-    dialog.addEventListener("close", () => document.body.classList.remove("modal-open"));
+      const image = document.createElement("div");
+      image.className = "project-image";
+      image.setAttribute("aria-hidden", "true");
 
-    const copyButton = document.getElementById("copyPec");
-    const copyStatus = document.getElementById("copyStatus");
-
-    if (PEC) {
-      document.getElementById("pecText").textContent = PEC;
-      copyButton.disabled = false;
-    }
-
-    copyButton.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(PEC);
-        copyStatus.textContent = "PEC copiata.";
-      } catch {
-        copyStatus.textContent = "Copia non disponibile: seleziona il testo manualmente.";
+      if (project.photos.length) {
+        image.style.backgroundImage = `url("${project.photos[0]}")`;
+        image.style.backgroundSize = "cover";
+        image.style.backgroundPosition = "center";
       }
+
+      const content = document.createElement("div");
+      content.className = "project-content";
+
+      const category = document.createElement("span");
+      category.className = "label";
+      category.textContent = project.categoryLabel;
+
+      const title = document.createElement("h3");
+      title.textContent = project.title;
+
+      const description = document.createElement("p");
+      description.textContent = project.description;
+
+      const button = document.createElement("button");
+      button.className = "text-button";
+      button.textContent = "Dettagli progetto ↗";
+      button.addEventListener("click", () => openProject(project));
+
+      content.append(category, title, description, button);
+      article.append(image, content);
+      projectContainer.append(article);
     });
 
-    const form = document.getElementById("contactForm");
-    const formStatus = document.getElementById("formStatus");
+    function openProject(project) {
+      document.getElementById("dialogTitle").textContent = project.title;
+      document.getElementById("dialogDescription").textContent = project.description;
+      gallery.replaceChildren();
+      pdfList.replaceChildren();
 
-    if (EMAIL_STUDIO) {
-      document.getElementById("submitContact").disabled = false;
-      formStatus.textContent = "Si aprirà il tuo programma di posta.";
-    }
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      if (!EMAIL_STUDIO || !form.reportValidity()) return;
-
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const message = document.getElementById("message").value.trim();
-      const subject = encodeURIComponent("Richiesta dal sito — " + name);
-      const body = encodeURIComponent(
-        "Nome: " + name + "\nEmail: " + email + "\n\n" + message
-      );
-
-      window.location.href = "mailto:" + EMAIL_STUDIO + "?subject=" + subject + "&body=" + body;
-    });
-
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-</body>
-</html>
+      if (project.photos.length === 0) {
+        const note = document.createElement("p");
+        note.className = "muted";
