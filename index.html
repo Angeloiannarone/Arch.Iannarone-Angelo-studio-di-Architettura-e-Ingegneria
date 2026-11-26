@@ -1,1184 +1,179 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Iannarone Architettura ed Ingegneria">
-  <title>Iannarone | Architettura ed Ingegneria</title>
+import * as React from "react";
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+type ContactField = {
+  name: string;
+  label: string;
+  type?:
+    | "text"
+    | "email"
+    | "tel"
+    | "date"
+    | "textarea"
+    | "select"
+    | "radio"
+    | "checkbox"
+    | "switch"
+    | "file";
+  required?: boolean;
+  placeholder?: string;
+  options?: (string | { label: string; value: string })[];
+  rows?: number;
+  autoComplete?: string;
+  half?: boolean;
+  multiple?: boolean;
+  accept?: string;
+};
 
-  <style>
-    :root {
-      --bg: #090c11;
-      --panel: rgba(17, 23, 32, .86);
-      --text: #f4f7f8;
-      --muted: #b2bdc5;
-      --blue: #80d7f4;
-      --line: rgba(210, 230, 240, .18);
-      --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+const DEFAULT_MESSAGES = {
+  invalidEmail: "Enter a valid email address",
+  fileDrop: "Drop files here, or click to browse",
+  fileHint: "Documents or images, up to 10MB each",
+  fileRemove: "Remove",
+  fileWrongType: "This file type is not accepted",
+  fileTooLarge: "Each file must be 10MB or smaller",
+  fileRejected: "One of your files was refused. Each must be 10MB or smaller, and a document or image.",
+  rateLimited: "Too many attempts just now. Please wait a moment and try again.",
+  network: "That didn't reach us. Check your connection and try again.",
+  previewUnavailable: "This preview can't send. Reload the page and try again.",
+  failed: "Something went wrong. Please try again.",
+};
+
+// Without `required`, a missing field reads "<label> is required".
+type Messages = typeof DEFAULT_MESSAGES & { required?: string };
+type ContactFormMessages = Partial<Messages>;
+type MessageKey = keyof typeof DEFAULT_MESSAGES;
+
+// Nothing is sent when a submission fails, so each of these is something to fix and retry.
+const FAILURES: Record<string, MessageKey> = {
+  FILE_REJECTED: "fileRejected",
+  RATE_LIMITED: "rateLimited",
+  NETWORK: "network",
+  PREVIEW_UNAVAILABLE: "previewUnavailable",
+};
+
+function isMalformedEmail(form: HTMLFormElement, name: string) {
+  const input = form.elements.namedItem(name);
+  return input instanceof HTMLInputElement && input.validity.typeMismatch;
+}
+
+function validationErrors(
+  fields: ContactField[],
+  values: Record<string, string>,
+  form: HTMLFormElement,
+  text: Messages
+): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const field of fields) {
+    if (field.type === "file") continue;
+    const value = values[field.name] ?? "";
+    if (field.required && value === "") {
+      errors[field.name] = text.required ?? `${field.label} is required`;
+    } else if (field.type === "email" && isMalformedEmail(form, field.name)) {
+      errors[field.name] = text.invalidEmail;
     }
-
-    * { box-sizing: border-box; }
-
-    html {
-      scroll-behavior: smooth;
-      scroll-padding-top: 80px;
-      background: var(--bg);
-    }
-
-    body {
-      margin: 0;
-      color: var(--text);
-      font-family: "Inter", Arial, sans-serif;
-      background: transparent;
-      isolation: isolate;
-    }
-
-    a { color: inherit; }
-    button, input, select, textarea { font: inherit; }
-    button { cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    [hidden] { display: none !important; }
-
-    .wrap { width: min(1280px, 90%); margin: auto; }
-    .accent { color: var(--blue); }
-    .muted { color: var(--muted); }
-
-    .label {
-      color: var(--blue);
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-    }
-
-    h1, h2, h3 {
-      font-family: var(--display);
-      text-transform: uppercase;
-      line-height: .95;
-      margin-top: 0;
-    }
-
-    h2 {
-      font-size: clamp(3.4rem, 8vw, 7rem);
-      margin: 16px 0 0;
-    }
-
-    h3 { font-size: 1.8rem; }
-    p { line-height: 1.75; }
-
-    /* Sfondo animato */
-    .site-background {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      overflow: hidden;
-      pointer-events: none;
-      background: #101820;
-    }
-
-    .background-motion {
-      position: absolute;
-      inset: -60px;
-      will-change: transform;
-    }
-
-    .background-slide {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      background-position: center;
-      background-size: cover;
-      animation: slideshow 40s infinite;
-    }
-
-    .background-slide:nth-child(1) {
-      background-image: url("images/citta-1.jpg");
-    }
-
-    .background-slide:nth-child(2) {
-      background-image: url("images/citta-2.jpg");
-      animation-delay: 10s;
-    }
-
-    .background-slide:nth-child(3) {
-      background-image: url("images/citta-3.jpg");
-      animation-delay: 20s;
-    }
-
-    .background-slide:nth-child(4) {
-      background-image: url("images/citta-4.jpg");
-      animation-delay: 30s;
-    }
-
-    @keyframes slideshow {
-      0% {
-        opacity: 0;
-        transform: scale(1.05) translateX(-1%);
-      }
-      5%, 25% { opacity: 1; }
-      30% {
-        opacity: 0;
-        transform: scale(1.12) translateX(1%);
-      }
-      100% { opacity: 0; }
-    }
-
-    .background-overlay {
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(rgba(210, 230, 240, .06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(210, 230, 240, .06) 1px, transparent 1px),
-        linear-gradient(135deg, rgba(9, 12, 17, .88), rgba(100, 48, 20, .35)),
-        rgba(9, 12, 17, .72);
-      background-size: 80px 80px, 80px 80px, cover, cover;
-    }
-
-    /* Menu */
-    .header {
-      position: fixed;
-      inset: 0 0 auto;
-      z-index: 20;
-      border-bottom: 1px solid var(--line);
-      background: rgba(9, 12, 17, .9);
-      backdrop-filter: blur(16px);
-    }
-
-    .nav {
-      min-height: 76px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    .brand {
-      font: 800 1.3rem/.9 var(--display);
-      text-decoration: none;
-      text-transform: uppercase;
-    }
-
-    .nav-links { display: flex; gap: 24px; }
-
-    .nav-links a {
-      color: #dce4e8;
-      font-size: .72rem;
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .nav-links a:hover { color: var(--blue); }
-
-    .menu-toggle {
-      display: none;
-      border: 1px solid var(--line);
-      background: transparent;
-      color: white;
-      padding: 10px 14px;
-    }
-
-    /* Apertura */
-    .hero {
-      min-height: 100vh;
-      padding: 150px 0 50px;
-      display: flex;
-      align-items: end;
-      background:
-        linear-gradient(90deg, rgba(9, 12, 17, .88), rgba(9, 12, 17, .5)),
-        url("images/borgo.jpg") center / cover;
-    }
-
-    .hero h1 {
-      font-size: clamp(4.5rem, 10vw, 9.5rem);
-      margin: 22px 0;
-      letter-spacing: -.025em;
-    }
-
-    .hero h1 .accent {
-      color: transparent;
-      -webkit-text-stroke: 1.5px var(--blue);
-    }
-
-    .hero-intro { max-width: 650px; color: #d7e0e4; }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 40px; }
-
-    .button {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 48px;
-      padding: 14px 22px;
-      border: 1px solid var(--blue);
-      background: var(--blue);
-      color: #081017;
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .08em;
-      text-decoration: none;
-      text-transform: uppercase;
-    }
-
-    .button-outline {
-      color: white;
-      background: transparent;
-      border-color: var(--line);
-    }
-
-    .hero-cards, .hero-bar, .projects {
-      display: grid;
-      gap: 14px;
-    }
-
-    .hero-cards, .projects { grid-template-columns: repeat(3, 1fr); }
-
-    .panel {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(12px);
-      padding: 24px;
-    }
-
-    .hero-cards .panel { background: rgba(20, 28, 36, .55); }
-    .hero-cards p { margin: 10px 0 0; }
-
-    .hero-bar {
-      grid-template-columns: repeat(3, 1fr);
-      border-top: 1px solid var(--line);
-      margin-top: 24px;
-      padding-top: 20px;
-    }
-
-    .hero-bar strong {
-      display: block;
-      font: 700 2rem var(--display);
-      color: var(--blue);
-    }
-
-    /* Fascia */
-    .marquee {
-      overflow: hidden;
-      border-block: 1px solid var(--line);
-      padding: 22px 0;
-    }
-
-    .marquee-track {
-      display: flex;
-      width: max-content;
-      animation: scroll 32s linear infinite;
-    }
-
-    .marquee-group {
-      display: flex;
-      gap: 36px;
-      padding-right: 36px;
-      align-items: center;
-    }
-
-    .marquee span {
-      font: 700 clamp(2rem, 4vw, 3.5rem)/1 var(--display);
-      white-space: nowrap;
-    }
-
-    .outline {
-      color: transparent;
-      -webkit-text-stroke: 1px var(--blue);
-    }
-
-    @keyframes scroll {
-      to { transform: translateX(-50%); }
-    }
-
-    /* Sezioni */
-    .section { padding: 110px 0; border-top: 1px solid var(--line); }
-    .section-heading { margin-bottom: 48px; }
-    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8%; }
-    .intro { font-size: clamp(1.1rem, 2vw, 1.5rem); }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 30px;
-    }
-
-    .owner { margin-top: 14px; }
-
-    .skills-layout {
-      display: grid;
-      grid-template-columns: .85fr 1.15fr;
-      gap: 14px;
-    }
-
-    .construction {
-      min-height: 470px;
-      display: flex;
-      align-items: end;
-      padding: 24px;
-      border: 1px solid var(--line);
-      background:
-        linear-gradient(0deg, rgba(9, 12, 17, .9), transparent),
-        url("images/cantiere.jpg") center / cover,
-        #28363d;
-    }
-
-    .badge {
-      padding: 12px;
-      border: 1px solid var(--blue);
-      color: var(--blue);
-      background: rgba(9, 12, 17, .8);
-    }
-
-    .skills-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .skill h3, .service h3 { margin: 28px 0 14px; }
-    .skill p, .service p { color: var(--muted); font-size: .9rem; margin-bottom: 0; }
-
-    .service-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    /* Lavori */
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 30px;
-    }
-
-    .filter {
-      padding: 10px 15px;
-      background: rgba(9, 12, 17, .7);
-      color: var(--muted);
-      border: 1px solid var(--line);
-      font-size: .75rem;
-      text-transform: uppercase;
-    }
-
-    .filter[aria-pressed="true"] {
-      color: var(--bg);
-      background: var(--blue);
-      border-color: var(--blue);
-    }
-
-    .project { padding: 0; overflow: hidden; }
-
-    .project-image {
-      height: 190px;
-      background: linear-gradient(135deg, #44555a, #1a252d 65%, #617378);
-    }
-
-    .project-content { padding: 24px; }
-    .project h3 { margin: 14px 0; }
-    .project p { color: var(--muted); font-size: .88rem; }
-
-    .text-button {
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: var(--blue);
-      font-size: .75rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-
-    /* Contatti */
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .contact-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .contact-list {
-      padding: 0;
-      list-style: none;
-      color: var(--muted);
-      line-height: 2;
-      overflow-wrap: anywhere;
-    }
-
-    .map {
-      width: 100%;
-      height: 300px;
-      margin-top: 18px;
-      border: 0;
-      filter: grayscale(1);
-    }
-
-    .map-note { font-size: .75rem; color: var(--muted); }
-    label { display: block; margin-bottom: 7px; font-size: .8rem; }
-
-    input, select, textarea {
-      width: 100%;
-      margin-bottom: 18px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 0;
-      background: #0c1118;
-      color: white;
-    }
-
-    textarea { min-height: 140px; resize: vertical; }
-    .status { min-height: 1.5em; color: var(--blue); font-size: .8rem; }
-
-    :focus-visible {
-      outline: 2px solid var(--blue);
-      outline-offset: 3px;
-    }
-
-    /* Footer e modale */
-    footer {
-      border-top: 1px solid var(--line);
-      padding: 45px 0 30px;
-      overflow: hidden;
-    }
-
-    .footer-title {
-      font: 800 clamp(3.5rem, 13vw, 12rem)/.85 var(--display);
-      color: transparent;
-      -webkit-text-stroke: 1px rgba(128, 215, 244, .6);
-      margin: 35px 0;
-    }
-
-    .footer-bottom {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      color: var(--muted);
-      font-size: .8rem;
-    }
-
-    dialog {
-      width: min(720px, 92%);
-      max-height: 85vh;
-      padding: 30px;
-      border: 1px solid var(--line);
-      background: #111820;
-      color: white;
-    }
-
-    dialog::backdrop { background: rgba(0, 0, 0, .82); }
-    .dialog-top { display: flex; justify-content: space-between; gap: 20px; }
-
-    .close {
-      align-self: start;
-      padding: 8px 12px;
-      color: white;
-      border: 1px solid var(--line);
-      background: transparent;
-    }
-
-    .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .gallery img { width: 100%; height: 180px; object-fit: cover; }
-    .pdf-list a { color: var(--blue); }
-
-    @media (max-width: 850px) {
-      .menu-toggle { display: block; }
-
-      .nav-links {
-        display: none;
-        position: absolute;
-        top: 76px;
-        left: 0;
-        right: 0;
-        padding: 25px 5%;
-        flex-direction: column;
-        background: #10151c;
-      }
-
-      .nav-links.open { display: flex; }
-      .split, .skills-layout, .contact-grid { grid-template-columns: 1fr; }
-      .projects, .service-grid { grid-template-columns: 1fr 1fr; }
-    }
-
-    @media (max-width: 550px) {
-      .section { padding: 75px 0; }
-      .hero-cards, .projects, .service-grid, .skills-grid { grid-template-columns: 1fr; }
-      .hero-bar { gap: 10px; }
-      .hero-bar strong { font-size: 1.5rem; }
-      .construction { min-height: 300px; }
-      .footer-bottom { flex-direction: column; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      .marquee-track { animation: none; }
-      .background-motion { transform: none !important; }
-      .background-slide { animation: none; opacity: 0; }
-      .background-slide:first-child { opacity: 1; transform: none; }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="site-background" aria-hidden="true">
-    <div class="background-motion">
-      <div class="background-slide"></div>
-      <div class="background-slide"></div>
-      <div class="background-slide"></div>
-      <div class="background-slide"></div>
-    </div>
-    <div class="background-overlay"></div>
-  </div>
-
-  <header class="header">
-    <div class="wrap nav">
-      <a href="#inizio" class="brand">
-        Iannarone<br><span class="accent">Architettura + Ingegneria</span>
-      </a>
-
-      <button
-        id="menuToggle"
-        class="menu-toggle"
-        aria-expanded="false"
-        aria-controls="navigation">
-        Menu
-      </button>
-
-      <nav id="navigation" class="nav-links" aria-label="Navigazione principale">
-        <a href="#studio">Lo studio</a>
-        <a href="#competenze">Competenze</a>
-        <a href="#servizi">Servizi</a>
-        <a href="#lavori">Lavori</a>
-        <a href="#contatti">Recapiti</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <section class="hero" id="inizio">
-      <div class="wrap">
-        <div class="label">Architettura / Ingegneria — Coordinate da inserire</div>
-
-        <h1>
-          Iannarone<br>
-          <span class="accent">Architettura<br>ed Ingegneria.</span>
-        </h1>
-
-        <p class="hero-intro">
-          Forma e struttura, visione e tecnica: uno spazio di dialogo
-          tra progetto, persone e territorio.
-        </p>
-
-        <div class="actions">
-          <a class="button" href="#lavori">Scopri i lavori ↗</a>
-          <a class="button button-outline" href="#contatti">Contatta lo studio ↗</a>
-        </div>
-
-        <div class="hero-cards">
-          <div class="panel">
-            <span class="label">Profilo professionale</span>
-            <p>OAPPC Avellino</p>
-          </div>
-          <div class="panel">
-            <span class="label">Titolare</span>
-            <p>Angelo Iannarone</p>
-          </div>
-          <div class="panel">
-            <span class="label">Sede</span>
-            <p id="heroAddress">Indirizzo da inserire</p>
-          </div>
-        </div>
-
-        <div class="hero-bar">
-          <div><strong>360°</strong><span class="muted">Visione integrata</span></div>
-          <div><strong>BIM/CAD</strong><span class="muted">Strumenti di progetto</span></div>
-          <div><strong>↓</strong><span class="muted">Scorri per scoprire</span></div>
-        </div>
-      </div>
-    </section>
-
-    <div class="marquee" aria-label="Sicurezza e catasto, progettazione architettonica">
-      <div class="marquee-track">
-        <div class="marquee-group">
-          <span>SICUREZZA + CATASTO</span>
-          <span class="outline">✳</span>
-          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span>
-          <span>✳</span>
-        </div>
-        <div class="marquee-group" aria-hidden="true">
-          <span>SICUREZZA + CATASTO</span>
-          <span class="outline">✳</span>
-          <span class="outline">PROGETTAZIONE ARCHITETTONICA</span>
-          <span>✳</span>
-        </div>
-      </div>
-    </div>
-
-    <section class="section" id="studio">
-      <div class="wrap split">
-        <div class="section-heading">
-          <div class="label">01 — Lo studio</div>
-          <h2>Forma e struttura.<br><span class="accent">Un'unica visione.</span></h2>
-        </div>
-
-        <div>
-          <p class="intro">
-            La sintesi tra forma e struttura guida un approccio in cui
-            architettura e tecnica dialogano con le esigenze delle persone
-            e le caratteristiche del luogo.
-          </p>
-
-          <p class="muted">
-            Ogni intervento nasce dall’ascolto e si sviluppa attraverso
-            attenzione al contesto, funzionalità e cura del dettaglio.
-          </p>
-
-          <div class="summary-grid">
-            <div class="panel">
-              <span class="label">Approccio</span>
-              <p>Progettazione integrata</p>
-            </div>
-            <div class="panel">
-              <span class="label">Obiettivo</span>
-              <p>Qualità dello spazio</p>
-            </div>
-          </div>
-
-          <div class="panel owner">
-            <span class="label">Il titolare</span>
-            <h3>Angelo Iannarone</h3>
-            <p class="muted">Profilo professionale e informazioni da completare.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="competenze">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="label">02 — Le competenze</div>
-          <h2>Una visione <span class="accent">completa.</span></h2>
-        </div>
-
-        <div class="skills-layout">
-          <div class="construction">
-            <span class="badge">NTC 2018 • ReLUIS</span>
-          </div>
-
-          <div class="skills-grid">
-            <article class="panel skill">
-              <span class="label">A1</span>
-              <h3>Architettura</h3>
-              <p>Spazi progettati in relazione a persone e contesto.</p>
-            </article>
-
-            <article class="panel skill">
-              <span class="label">S2</span>
-              <h3>Strutture</h3>
-              <p>Analisi e attenzione al comportamento strutturale.</p>
-            </article>
-
-            <article class="panel skill">
-              <span class="label">E3</span>
-              <h3>Edilizia</h3>
-              <p>Interventi su edifici nuovi ed esistenti.</p>
-            </article>
-
-            <article class="panel skill">
-              <span class="label">C4</span>
-              <h3>Catasto</h3>
-              <p>Documentazione e pratiche tecniche.</p>
-            </article>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="servizi">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="label">03 — I servizi</div>
-          <h2>Dal progetto <span class="accent">al dettaglio.</span></h2>
-          <p class="muted">Prestazioni proposte: verifica e personalizza l’elenco.</p>
-        </div>
-
-        <div class="service-grid">
-          <article class="panel service">
-            <span class="label">01</span>
-            <h3>Progettazione architettonica</h3>
-            <p>Ideazione e sviluppo degli spazi.</p>
-          </article>
-
-          <article class="panel service">
-            <span class="label">02</span>
-            <h3>Progettazione strutturale</h3>
-            <p>Studio e definizione delle soluzioni strutturali.</p>
-          </article>
-
-          <article class="panel service">
-            <span class="label">03</span>
-            <h3>Ristrutturazione</h3>
-            <p>Trasformazione e recupero degli edifici.</p>
-          </article>
-
-          <article class="panel service">
-            <span class="label">04</span>
-            <h3>Restauro</h3>
-            <p>Interventi attenti all’identità del costruito.</p>
-          </article>
-
-          <article class="panel service">
-            <span class="label">05</span>
-            <h3>Sicurezza</h3>
-            <p>Supporto tecnico nelle fasi dell’intervento.</p>
-          </article>
-
-          <article class="panel service">
-            <span class="label">06</span>
-            <h3>Pratiche catastali</h3>
-            <p>Documentazione e adempimenti tecnici.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="lavori">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="label">04 — Lavori svolti</div>
-          <h2>Progetti <span class="accent">selezionati.</span></h2>
-          <p class="muted">
-            Descrizioni e immagini sono segnaposto, in attesa dei materiali reali.
-          </p>
-        </div>
-
-        <div class="filters" aria-label="Filtra i progetti">
-          <button class="filter" data-filter="tutti" aria-pressed="true">Tutti</button>
-          <button class="filter" data-filter="residenziale" aria-pressed="false">Residenziale</button>
-          <button class="filter" data-filter="strutturale" aria-pressed="false">Strutturale</button>
-          <button class="filter" data-filter="restauro" aria-pressed="false">Restauro e pubblico</button>
-        </div>
-
-        <div class="projects" id="projects"></div>
-      </div>
-    </section>
-
-    <section class="section" id="contatti">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="label">05 — Recapiti</div>
-          <h2>Parliamo del <span class="accent">tuo progetto.</span></h2>
-        </div>
-
-        <div class="contact-grid">
-          <div>
-            <div class="panel">
-              <span class="label">Studio</span>
-
-              <ul class="contact-list">
-                <li>Indirizzo: <span id="address">da inserire</span></li>
-                <li>Telefono: <a href="tel:+393382937697">338 2937697</a></li>
-                <li>Email 1: <span id="email1">da inserire</span></li>
-                <li>Email 2: <span id="email2">da inserire</span></li>
-                <li>Email 3: <span id="email3">da inserire</span></li>
-              </ul>
-
-              <div class="label">PEC</div>
-
-              <div class="contact-row">
-                <p id="pecText">Da inserire</p>
-                <button class="text-button" id="copyPec" disabled>Copia</button>
-              </div>
-
-              <div class="status" id="copyStatus" role="status"></div>
-            </div>
-
-            <iframe
-              class="map"
-              title="Mappa OpenStreetMap: vista indicativa dell'Italia"
-              loading="lazy"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=6.5%2C36.5%2C19.0%2C47.5&amp;layer=mapnik">
-            </iframe>
-
-            <p class="map-note">
-              Vista indicativa: sostituire con la posizione della sede.
-              © <a href="https://www.openstreetmap.org/copyright">Collaboratori OpenStreetMap</a>
-            </p>
-          </div>
-
-          <form class="panel" id="contactForm">
-            <span class="label">Scrivici</span>
-            <h3>Raccontaci la tua idea</h3>
-
-            <label for="name">Nome</label>
-            <input id="name" autocomplete="name" maxlength="120" required>
-
-            <label for="email">La tua email</label>
-            <input id="email" type="email" autocomplete="email" maxlength="254" required>
-
-            <label for="area">Ambito di intervento</label>
-            <select id="area" required>
-              <option value="">Seleziona un ambito</option>
-              <option>Architettura</option>
-              <option>Strutture</option>
-              <option>Ristrutturazione</option>
-              <option>Restauro</option>
-              <option>Pratiche e consulenza</option>
-              <option>Altro</option>
-            </select>
-
-            <label for="message">Messaggio</label>
-            <textarea id="message" maxlength="5000" required></textarea>
-
-            <button class="button" id="submitContact" type="submit">
-              Invia richiesta ↗
-            </button>
-
-            <p class="status" id="formStatus" role="status"></p>
-          </form>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="wrap">
-      <div class="label">Architettura ed Ingegneria</div>
-      <div class="footer-title" aria-hidden="true">IANNARONE</div>
-
-      <div class="footer-bottom">
-        <span>© <span id="year"></span> Angelo Iannarone</span>
-        <span>
-          <a href="tel:+393382937697">338 2937697</a> ·
-          <span id="footerAddress">Indirizzo da inserire</span>
-        </span>
-      </div>
-    </div>
-  </footer>
-
-  <dialog id="projectDialog" aria-labelledby="dialogTitle">
-    <div class="dialog-top">
-      <div>
-        <span class="label">Dettagli progetto</span>
-        <h2 id="dialogTitle"></h2>
-      </div>
-
-      <button class="close" id="closeDialog" aria-label="Chiudi dettagli">✕</button>
-    </div>
-
-    <p class="muted" id="dialogDescription"></p>
-    <div class="gallery" id="dialogGallery"></div>
-    <div class="pdf-list" id="dialogPdfs"></div>
-  </dialog>
-
-  <script>
-    /*
-      RECAPITI PUBBLICI
-      Inserisci qui solo i recapiti che vuoi mostrare sul sito.
-      La chiave Resend NON va inserita in questo file.
-    */
-    const ADDRESS = "";
-    const PEC = "";
-    const EMAILS = ["", "", ""];
-
-    /*
-      PROGETTI
-      Inserisci i percorsi delle foto e dei PDF quando disponibili.
-
-      Esempio:
-      photos: ["images/covotti-1.jpg", "images/covotti-2.jpg"],
-      pdfs: [{ label: "Elaborato progettuale", url: "pdf/covotti.pdf" }]
-    */
-    const projects = [
-      {
-        title: "Ristrutturazione di Via Covotti",
-        category: "residenziale",
-        categoryLabel: "Residenziale",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      },
-      {
-        title: "Campanile di S. Pietro",
-        category: "restauro",
-        categoryLabel: "Restauro e pubblico",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      },
-      {
-        title: "Miglioramento sismico",
-        category: "strutturale",
-        categoryLabel: "Strutturale",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      },
-      {
-        title: "Restauro facciata",
-        category: "restauro",
-        categoryLabel: "Restauro e pubblico",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      },
-      {
-        title: "Edificio NZEB",
-        category: "residenziale",
-        categoryLabel: "Residenziale",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      },
-      {
-        title: "Riqualificazione",
-        category: "restauro",
-        categoryLabel: "Restauro e pubblico",
-        description: "Descrizione del progetto da inserire.",
-        photos: [],
-        pdfs: []
-      }
-    ];
-
-    // Menu mobile
-    const menuToggle = document.getElementById("menuToggle");
-    const navigation = document.getElementById("navigation");
-
-    menuToggle.addEventListener("click", () => {
-      const open = navigation.classList.toggle("open");
-      menuToggle.setAttribute("aria-expanded", String(open));
+  }
+  return errors;
+}
+
+type ContactFormSending = {
+  formId: string;
+  onSubmit?: (values: Record<string, string>) => Promise<void> | void;
+  fields: ContactField[];
+  messages?: ContactFormMessages;
+};
+
+// ContactForm's state and sending, for a form that lays out its own fields.
+function useContactForm({ formId, onSubmit, fields, messages }: ContactFormSending) {
+  const text: Messages = { ...DEFAULT_MESSAGES, ...messages };
+  const [values, setValues] = React.useState<Record<string, string>>(() =>
+    Object.fromEntries(fields.map((field) => [field.name, ""]))
+  );
+  const [files, setFiles] = React.useState<Record<string, File[]>>({});
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [status, setStatus] = React.useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
+  const [failure, setFailure] = React.useState<MessageKey>("failed");
+
+  const clearError = (name: string) => {
+    setStatus((current) => (current === "error" ? "idle" : current));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
     });
+  };
 
-    navigation.addEventListener("click", (event) => {
-      if (event.target.closest("a")) {
-        navigation.classList.remove("open");
-        menuToggle.setAttribute("aria-expanded", "false");
-      }
-    });
+  const setField = (name: string, value: string) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+    clearError(name);
+  };
 
-    // Schede progetto e modale
-    const projectContainer = document.getElementById("projects");
-    const dialog = document.getElementById("projectDialog");
-    const gallery = document.getElementById("dialogGallery");
-    const pdfList = document.getElementById("dialogPdfs");
+  const setFileField = (name: string, picked: File[]) => {
+    setFiles((prev) => ({ ...prev, [name]: picked }));
+    clearError(name);
+  };
 
-    projects.forEach((project) => {
-      const article = document.createElement("article");
-      article.className = "panel project";
-      article.dataset.category = project.category;
+  const fileErrors = (): Record<string, string> =>
+    Object.fromEntries(
+      fields
+        .filter((field) => field.type === "file")
+        .map((field): [string, string] => {
+          const picked = files[field.name] ?? [];
+          if (field.required && picked.length === 0) {
+            return [field.name, text.required ?? `${field.label} is required`];
+          }
+          if (picked.some((file) => file.size > MAX_FILE_BYTES)) {
+            return [field.name, text.fileTooLarge];
+          }
+          return [field.name, ""];
+        })
+        .filter(([, message]) => message !== "")
+    );
 
-      const image = document.createElement("div");
-      image.className = "project-image";
-      image.setAttribute("aria-hidden", "true");
-
-      if (project.photos.length) {
-        image.style.backgroundImage = `url("${project.photos[0]}")`;
-        image.style.backgroundSize = "cover";
-        image.style.backgroundPosition = "center";
-      }
-
-      const content = document.createElement("div");
-      content.className = "project-content";
-
-      const category = document.createElement("span");
-      category.className = "label";
-      category.textContent = project.categoryLabel;
-
-      const title = document.createElement("h3");
-      title.textContent = project.title;
-
-      const description = document.createElement("p");
-      description.textContent = project.description;
-
-      const button = document.createElement("button");
-      button.className = "text-button";
-      button.textContent = "Dettagli progetto ↗";
-      button.addEventListener("click", () => openProject(project));
-
-      content.append(category, title, description, button);
-      article.append(image, content);
-      projectContainer.append(article);
-    });
-
-    function openProject(project) {
-      document.getElementById("dialogTitle").textContent = project.title;
-      document.getElementById("dialogDescription").textContent = project.description;
-      gallery.replaceChildren();
-      pdfList.replaceChildren();
-
-      if (project.photos.length === 0) {
-        const note = document.createElement("p");
-        note.className = "muted";
-        note.textContent = "Fotografie da inserire.";
-        gallery.append(note);
-      } else {
-        project.photos.forEach((src, index) => {
-          const image = document.createElement("img");
-          image.src = src;
-          image.alt = `${project.title}: fotografia ${index + 1}`;
-          image.loading = "lazy";
-          gallery.append(image);
-        });
-      }
-
-      if (project.pdfs.length === 0) {
-        const note = document.createElement("p");
-        note.className = "muted";
-        note.textContent = "Elaborati PDF da inserire, se disponibili.";
-        pdfList.append(note);
-      } else {
-        const heading = document.createElement("h3");
-        heading.textContent = "Elaborati";
-        pdfList.append(heading);
-
-        project.pdfs.forEach((pdf) => {
-          const paragraph = document.createElement("p");
-          const link = document.createElement("a");
-          link.href = pdf.url;
-          link.textContent = pdf.label;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          paragraph.append(link);
-          pdfList.append(paragraph);
-        });
-      }
-
-      dialog.showModal();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const sentForm = event.currentTarget;
+    const invalid = {
+      ...validationErrors(fields, values, event.currentTarget, text),
+      ...fileErrors(),
+    };
+    if (Object.keys(invalid).length > 0) {
+      setErrors(invalid);
+      return;
     }
-
-    document.getElementById("closeDialog").addEventListener("click", () => {
-      dialog.close();
-    });
-
-    document.querySelectorAll(".filter").forEach((button) => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".filter").forEach((item) => {
-          item.setAttribute("aria-pressed", "false");
-        });
-
-        button.setAttribute("aria-pressed", "true");
-
-        document.querySelectorAll(".project").forEach((project) => {
-          project.hidden =
-            button.dataset.filter !== "tutti" &&
-            project.dataset.category !== button.dataset.filter;
-        });
+    setStatus("submitting");
+    try {
+      const submitted = Object.fromEntries(
+        fields
+          .filter((field) => field.type !== "file")
+          .map((field) => [field.name, values[field.name] ?? ""])
+      );
+      const { default: vibeForm } = await import("@vibe/form");
+      await vibeForm.submit({
+        formId,
+        form: sentForm,
+        fields: fields.map((field) => ({
+          name: field.name,
+          label: field.label,
+          ...(field.type === "file"
+            ? { type: field.type, value: files[field.name] ?? [] }
+            : { type: field.type ?? "text", value: submitted[field.name] ?? "" }),
+        })),
       });
-    });
-
-    // Recapiti pubblici
-    if (ADDRESS) {
-      document.getElementById("address").textContent = ADDRESS;
-      document.getElementById("heroAddress").textContent = ADDRESS;
-      document.getElementById("footerAddress").textContent = ADDRESS;
+      await onSubmit?.(submitted);
+      setStatus("success");
+    } catch (error) {
+      const code = (error as { code?: string } | null)?.code ?? "";
+      setFailure(FAILURES[code] ?? "failed");
+      setStatus("error");
     }
+  };
 
-    EMAILS.forEach((email, index) => {
-      if (email) {
-        document.getElementById(`email${index + 1}`).textContent = email;
-      }
-    });
+  return { values, errors, status, failure: text[failure], text, setField, setFileField, handleSubmit };
+}
 
-    const copyPec = document.getElementById("copyPec");
-
-    if (PEC) {
-      document.getElementById("pecText").textContent = PEC;
-      copyPec.disabled = false;
-    }
-
-    copyPec.addEventListener("click", async () => {
-      const status = document.getElementById("copyStatus");
-
-      try {
-        await navigator.clipboard.writeText(PEC);
-        status.textContent = "PEC copiata.";
-      } catch {
-        status.textContent = "Copia non disponibile: seleziona il testo manualmente.";
-      }
-    });
-
-    // Invio del modulo tramite la funzione server /api/contact
-    const form = document.getElementById("contactForm");
-    const formStatus = document.getElementById("formStatus");
-    const submitButton = document.getElementById("submitContact");
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (!form.reportValidity()) return;
-
-      submitButton.disabled = true;
-      formStatus.textContent = "Invio in corso…";
-
-      try {
-        const response = await fetch("/api/contact", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: document.getElementById("name").value,
-            email: document.getElementById("email").value,
-            area: document.getElementById("area").value,
-            message: document.getElementById("message").value
-          })
-        });
-
-        if (!response.ok) throw new Error("Invio non riuscito");
-
-        form.reset();
-        formStatus.textContent = "Richiesta accettata per l’invio. Grazie!";
-      } catch {
-        formStatus.textContent =
-          "Invio non riuscito. Riprova o contatta lo studio telefonicamente.";
-      } finally {
-        submitButton.disabled = false;
-      }
-    });
-
-    // Parallasse con rispetto della preferenza di movimento ridotto
-    const motionLayer = document.querySelector(".background-motion");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let parallaxPending = false;
-
-    function updateParallax() {
-      if (reducedMotion.matches) {
-        motionLayer.style.transform = "";
-      } else {
-        const scrollable = Math.max(
-          1,
-          document.documentElement.scrollHeight - window.innerHeight
-        );
-
-        const progress = Math.min(
-          1,
-          Math.max(0, window.scrollY / scrollable)
-        );
-
-        motionLayer.style.transform =
-          `translateY(${(progress - 0.5) * 40}px)`;
-      }
-
-      parallaxPending = false;
-    }
-
-    window.addEventListener("scroll", () => {
-      if (!parallaxPending) {
-        parallaxPending = true;
-        requestAnimationFrame(updateParallax);
-      }
-    }, { passive: true });
-
-    window.addEventListener("resize", updateParallax);
-    reducedMotion.addEventListener("change", updateParallax);
-    updateParallax();
-
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-</body>
-</html>
+export { MAX_FILE_BYTES, useContactForm };
+export type { ContactField, ContactFormMessages, ContactFormSending };
